@@ -1,71 +1,71 @@
+import logging, requests, random
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import requests
-from bs4 import BeautifulSoup
-import asyncio
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 import re
-from collections import deque
-import threading
-from flask import Flask
 
-TOKEN = "7973528127:AAF-IdHNXlUUHLGgojzjQ2x_MEy2WhP4DIA"
-CHAT_ID = None
-history = deque(maxlen=30000)
+BOT_TOKEN = "7973528127:AAF-IdHNXlUUHLGgojzjQ2x_MEy2WhP4DIA"
+USER_ID = 7959705230
+RESULTS_URL = "https://odibets.com/aviator"  # Site to scrape
 
-# Flask dummy server to keep Render alive
-flask_app = Flask(__name__)
+# Storage for rounds
+rounds = []
 
-@flask_app.route('/')
-def home():
-    return "Bot is running!"
+logging.basicConfig(level=logging.INFO)
 
-def run_flask():
-    flask_app.run(host='0.0.0.0', port=10000)
-
-# Start Flask in background
-threading.Thread(target=run_flask).start()
-
-# Aviator scraping and prediction
-def predict_next_round():
-    if not history:
-        return "Not enough data yet."
-    avg = sum(history[-100:]) / len(history[-100:])
-    return "LOW (<2.0x)" if avg > 2.0 else "HIGH (>2.0x)"
-
-def scrape_odibets():
+def scrape_results():
     try:
-        res = requests.get("https://odibets.com/aviator", headers={"User-Agent": "Mozilla/5.0"})
-        soup = BeautifulSoup(res.text, "html.parser")
-        results = soup.find_all("div", class_="aviator-history-item")
-        values = []
-        for div in results:
-            match = re.search(r"(\d+\.\d+)x", div.text)
-            if match:
-                val = float(match.group(1))
-                values.append(val)
-        return values[::-1]
-    except:
-        return []
+        response = requests.get(RESULTS_URL, timeout=10)
+        matches = re.findall(r'(\d+\.\d+)x', response.text)
+        if matches:
+            floats = [float(m) for m in matches[:30000]]
+            return floats
+    except Exception as e:
+        logging.error("Scrape error: " + str(e))
+    return []
 
-# Telegram bot logic
+def predict_next(rounds):
+    if not rounds or len(rounds) < 50:
+        return round(random.uniform(1.00, 2.00), 2)
+    
+    # Simple statistical cluster frequency detection
+    cluster = {
+        "low": len([x for x in rounds if x <= 1.50]),
+        "mid": len([x for x in rounds if 1.51 <= x <= 3.0]),
+        "high": len([x for x in rounds if x > 3.0])
+    }
+    total = sum(cluster.values())
+    weights = {
+        "low": cluster["low"] / total,
+        "mid": cluster["mid"] / total,
+        "high": cluster["high"] / total,
+    }
+
+    # Weighted random prediction
+    if weights["high"] > 0.3:
+        return round(random.uniform(3.5, 6.0), 2)
+    elif weights["mid"] > 0.5:
+        return round(random.uniform(2.0, 3.5), 2)
+    else:
+        return round(random.uniform(1.1, 2.0), 2)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global CHAT_ID
-    CHAT_ID = update.effective_chat.id
-    await context.bot.send_message(chat_id=CHAT_ID, text="Aviator Prediction Bot activated!")
-    asyncio.create_task(send_prediction_loop(context))  # run loop without blocking
+    if update.effective_user.id != USER_ID:
+        await update.message.reply_text("Access Denied.")
+        return
 
-async def send_prediction_loop(context):
-    while True:
-        results = scrape_odibets()
-        if results:
-            for r in results:
-                if r not in history:
-                    history.append(r)
-                    prediction = predict_next_round()
-                    await context.bot.send_message(chat_id=CHAT_ID, text=f"New Round: {r}x\nPrediction: {prediction}")
-        await asyncio.sleep(10)
+    await update.message.reply_text("Welcome James! Scraping results and analyzing...")
 
-# Start the bot
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.run_polling()
+    global rounds
+    rounds = scrape_results()
+
+    if not rounds:
+        await update.message.reply_text("Failed to retrieve results.")
+        return
+
+    prediction = predict_next(rounds)
+    await update.message.reply_text(f"Next Round Prediction: {prediction}×")
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.run_polling()
