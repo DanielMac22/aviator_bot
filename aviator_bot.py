@@ -5,11 +5,27 @@ from bs4 import BeautifulSoup
 import asyncio
 import re
 from collections import deque
+import threading
+from flask import Flask
 
 TOKEN = "7973528127:AAF-IdHNXlUUHLGgojzjQ2x_MEy2WhP4DIA"
 CHAT_ID = None
 history = deque(maxlen=30000)
 
+# Flask dummy server to keep Render alive
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=10000)
+
+# Start Flask in background
+threading.Thread(target=run_flask).start()
+
+# Aviator scraping and prediction
 def predict_next_round():
     if not history:
         return "Not enough data yet."
@@ -31,11 +47,12 @@ def scrape_odibets():
     except:
         return []
 
+# Telegram bot logic
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global CHAT_ID
     CHAT_ID = update.effective_chat.id
     await context.bot.send_message(chat_id=CHAT_ID, text="Aviator Prediction Bot activated!")
-    await send_prediction_loop(context)
+    asyncio.create_task(send_prediction_loop(context))  # run loop without blocking
 
 async def send_prediction_loop(context):
     while True:
@@ -48,20 +65,7 @@ async def send_prediction_loop(context):
                     await context.bot.send_message(chat_id=CHAT_ID, text=f"New Round: {r}x\nPrediction: {prediction}")
         await asyncio.sleep(10)
 
+# Start the bot
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start))
 app.run_polling()
-
-from flask import Flask
-import threading
-
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is running!"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=10000)
-
-threading.Thread(target=run_flask).start()
