@@ -3,11 +3,10 @@ services:
     name: aviator-bot
     env: python
     buildCommand: |
-      apt-get update && apt-get install -y python3-dev gcc
-      pip install --upgrade pip
-      pip install -r requirements.txt
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt --no-cache-dir
     startCommand: python bot.py
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.9  # Recommended stable version
     plan: free
