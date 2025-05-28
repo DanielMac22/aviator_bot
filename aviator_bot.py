@@ -3,7 +3,7 @@ import json
 import asyncio
 import aiohttp
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import CommandStart
+from aiogram.dispatcher.filters import CommandStart
 from flask import Flask, request
 
 # === CONFIGURATION ===
