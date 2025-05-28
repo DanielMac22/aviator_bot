@@ -3,8 +3,8 @@ services:
     name: aviator-bot
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: ./start.sh
+    startCommand: python bot.py
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11
+      - key: TELEGRAM_TOKEN
+        value: YOUR_TELEGRAM_BOT_TOKEN
     plan: free
