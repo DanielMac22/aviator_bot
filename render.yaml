@@ -2,9 +2,12 @@ services:
   - type: web
     name: aviator-bot
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      apt-get update && apt-get install -y python3-dev gcc
+      pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: python bot.py
     envVars:
-      - key: TELEGRAM_TOKEN
-        value: 7973528127:AAF-IdHNXlUUHLGgojzjQ2x_MEy2WhP4DIA
+      - key: PYTHON_VERSION
+        value: 3.11
     plan: free
