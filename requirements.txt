@@ -1,5 +1,5 @@
 aiogram==2.25.1
-aiohttp==3.8.0  # Changed from 3.9.1 to match aiogram's requirement
+aiohttp==3.8.0 --only-binary=:all:  # Force using pre-built wheel
 Flask==2.3.2
 python-dotenv==1.0.0
 beautifulsoup4==4.12.2
