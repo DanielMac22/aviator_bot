@@ -2,7 +2,7 @@ import os
 
 class Config:
     # Telegram
-    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN")
+    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "7973528127:AAF-IdHNXlUUHLGgojzjQ2x_MEy2WhP4DIA")
     ALLOWED_USER_IDS = [7959705230]  # Add more IDs as needed
     
     # Aviator
