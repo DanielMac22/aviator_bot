@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Export Flask variables
-export FLASK_APP=aviator_bot.py
-export FLASK_RUN_PORT=10000
+# Activate virtual environment if needed
+# source venv/bin/activate
 
 # Run the bot
-python aviator_bot.py
+python bot.py
