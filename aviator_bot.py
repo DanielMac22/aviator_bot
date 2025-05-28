@@ -25,8 +25,8 @@ def index():
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-@dp.message(CommandStart())
-async def start(message: types.Message):
+@dp.message_handler(CommandStart())
+async def handler_start(message: types.Message):
     if message.from_user.id != ALLOWED_USER_ID:
         return await message.answer("Access Denied.")
     await message.answer("Welcome to Aviator Prediction Bot. Analyzing...")
