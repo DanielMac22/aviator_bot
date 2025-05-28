@@ -1,3 +1,9 @@
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "Aviator Bot is running", 200
 from aiogram import Bot, Dispatcher, types
 from aiogram.dispatcher.filters import CommandStart
 from config import Config
